@@ -43,7 +43,11 @@ MestReNova.exe --nogui --wait --logfile run.log --sf processSpectrum process.qs
 - 单一归一化锚点：`integrals.normValue = anchor.integralValue() / anchorHydrogenCount`，其余积分读取 `integralValue(integrals.normValue)`。若用可编辑文字呈现轴下积分，文字从当前实测积分生成，不硬编码或独立强制为理论整数；每次重处理后同步更新。
 - `page.left` / `page.top` 可以非零。创建对象时先按页面内相对位置设置几何，完成后仅一次 `item.translate(page.left, page.top)`；或从一开始使用页面绝对坐标，不能两种方式叠加。`item.left` / `top` setter 会改变边界和尺寸，不能靠逐项加偏移来平移已排好的对象。
 - `spec.horzZoom(14, -1, "ppm")` 设置主谱范围；`getScaleLimits()` 可能按最小值/最大值返回，需核对实际渲染左高右低。`page.cloneItems([spec])` 可创建局部放大，分析数据保持一致。
-- 峰标在放大图使用 `peaks.position = "PeakGroups"` 可避免挤在基线。保留原生积分对象；轴下文字需有足够高度避免数字被裁切。
+- 峰标位置按渲染选择：`peaks.position = "Top"` 可将标签放在上方独立区域；`"PeakGroups"` 可贴近峰组，但需检查是否与积分曲线交叉，不能固定认为其中一种总是更清楚。`grid.showframe = true` 可明确放大图边界。
+- 优先显示原生积分标签：`integrals.label.show = true`、`integrals.label.position = "Segment"`。通过 `vertZoom(...)` 的负下限为基线以下的积分段和数字留出空间，上限兼顾峰高、积分曲线和标签。二苄叉丙酮的改进版用过主谱下限约 -1800、上限约 `realMax * 1.4`；这些是该数据强度单位下的样例，不能直接当作其他样品默认值。
+- `integrals.curve.margin`、`integrals.curve.maxheight` 可调整积分曲线区域，需与峰标一起渲染检查。原生积分标签、刻度和峰线不能重叠；保留主谱的积分和必要峰标，不能仅显示放大图标签。详细要求见 [example-layout.md](example-layout.md)。
+- 主谱曲线与峰标间距过大时，调整 `integrals.curve.margin` 和 `integrals.curve.maxheight`，让最高的绿色积分曲线位于峰标下缘附近；二苄叉丙酮本次版式使用过 margin = 12、maxheight = 8，其他页面需按实际渲染调整；这两个值属于显示参数，不改变积分归一化。纵轴先按当前数据最高峰和弱峰选择，避免照抄样例的 `realMax` 倍数。低场/高场信号与页面对象重叠时，先平移相关对象，再视需要适度提高 `vertZoom` 上限；重渲染确认弱峰仍清楚。
+- 多重峰报告使用显式富文本样式，例如 `draw.text('<span style="font-family:Times New Roman; font-size:11pt; font-weight:normal; font-style:normal;"><sup>1</sup>H NMR (400 MHz, CDCl<sub>3</sub>) δ ... (<i>J</i> = ... Hz, ...)</span>', true)`；示例频率和溶剂只是格式展示，实际文本从当前实验生成。中文片段单独指定可用的中文字体，保持左对齐。脚本包含中文或 δ 时，本机 Mnova 14 已使用 UTF-8 带 BOM 的 `.qs` 正确加载；无 BOM 时需验证编码，不能只检查控制台文字而忽略原生页面渲染。
 
 ## 交付时记录
 
