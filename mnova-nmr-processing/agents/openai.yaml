@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mnova 一维氢谱处理"
+  short_description: "从原始 FID 生成可编辑 Mnova，人工解析峰组、积分和多重性，可选导出 PDF"
+  default_prompt: "使用 $mnova-nmr-processing 处理这个一维氢谱数据并生成可编辑的 .mnova。"
