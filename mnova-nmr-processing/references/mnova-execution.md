@@ -17,7 +17,9 @@
 
 ## 命令行入口
 
-在 Windows / Mnova 14.0.0-23239 已实测 FID 导入、预处理、人工定义分析对象、保存、重新读取及页面渲染。其他安装先运行 `MestReNova.exe --help`，核对当前版本参数；读取安装目录 `documents/scripts/mnova-scripting.html`、`nmr-processing.html`、`nmr-properties.html` 及 `examples/scripts/`。
+优先使用 [跨平台启动器](cross-platform.md) 统一安装发现、参数数组、编码和运行日志。下述 `MestReNova.exe` 是 Windows 程序名；macOS 由启动器读取 `.app` 的 Info.plist 来解析内部程序。现有原生处理与版式 API 保持不变，Mac 仍需实际验证当前版本。
+
+在 Windows / Mnova 14.0.0-23239 已实测 FID 导入、预处理、人工定义分析对象、保存、重新读取及页面渲染；新增启动器在该安装上完成了参数检测和真实小型脚本运行。Mac 17.0.1-41952 仅完成 DMG 静态检查及 bundle 解析测试，完整运行尚未实机验收。其他安装先用启动器 `doctor` 核对当前版本参数；Windows 文档/示例位于安装目录 `documents/scripts/` 和 `examples/scripts/`，已检查的 Mac 包示例位于 `Contents/Resources/scripts/examples/`，没有独立的前述 HTML 文档路径。按当前版本随附示例和帮助核对 API。
 
 ```text
 MestReNova.exe --nogui --wait --logfile run.log --sf processSpectrum process.qs

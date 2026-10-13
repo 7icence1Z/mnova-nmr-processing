@@ -5,7 +5,9 @@ description: 使用已激活的 MestReNova 将原始一维氢谱 FID 处理为�
 
 # Mnova 一维氢谱处理
 
-默认用户已安装并激活 MestReNova。使用 Mnova 本身导入、处理和保存可编辑文档；不以外部绘制的谱图或改扩展名的文件代替 `.mnova`。
+默认用户已安装并激活 MestReNova。使用 Mnova 本身导入、处理和保存可编辑文档；不以外部绘制的谱图或改扩展名的文件代替 `.mnova`。Windows 与 macOS 共用 Python 标准库启动器 `scripts/mnova_runner.py`；安装发现、能力检查及运行方式见 [references/cross-platform.md](references/cross-platform.md)。
+
+当前 Windows / Mnova 14 有原生处理流程及启动器实测；Mac / Mnova 17.0.1 已完成安装包静态检查与路径解析测试，尚未完成实机运行验收。首次在 Mac 执行时先检查当前版本的启动、保存、重新读取和渲染，不将静态检查宣称为全流程兼容。
 
 ## 工作边界与默认设置
 
@@ -20,7 +22,7 @@ description: 使用已激活的 MestReNova 将原始一维氢谱 FID 处理为�
 ## 执行流程
 
 1. **识别输入和要求。** 找到实验目录及 `fid`、采集参数；Bruker 数据保留 `acqus` 等关联文件。多实验目录先按核种和参数选目标，无法唯一确定时询问。读取用户结构、命名及课程要求；本课程基准见 [references/course-profile.md](references/course-profile.md)。
-2. **确认执行接口。** 整个生成和核验流程采用纯脚本：Mnova 原生 QtScript 写入可编辑对象，Python 调用进程并辅助谱点分析与绘图，不依赖 GUI 操作。先运行当前安装的 `MestReNova.exe --help`，确认 `--nogui`、`--wait`、`--sf`，再按 [references/mnova-execution.md](references/mnova-execution.md) 执行、查日志和验收。读取随安装提供的 scripting 文档和官方示例；不要因桌面窗口启动失败就认为脚本不可用。无界面接口不可用时说明具体限制，不以窗口操作替代。
+2. **确认执行接口。** 整个生成和核验流程采用纯脚本：Mnova 原生 QtScript 写入可编辑对象，Python 调用进程并辅助谱点分析与绘图，不依赖 GUI 操作。先运行 `scripts/mnova_runner.py doctor`，发现当前程序并核对无界面参数；macOS 从 `.app` 的 Info.plist 解析内部程序，不套用 Windows 路径。再按 [references/mnova-execution.md](references/mnova-execution.md) 执行、查日志和验收。读取随安装提供的 scripting 文档和官方示例；不要因桌面窗口启动失败就认为脚本不可用。无界面接口不可用时说明具体限制，不以窗口操作替代。
 3. **导入与预处理。** 导入原始 FID，确认时域数据转换成谱图。检查数字滤波处理等导入设置，应用自动相位、自动基线，放大检查峰形和无信号区。优先保留合理的 Mnova 导入处理设置，避免无依据地固定线宽或过度平滑。
 4. **定标。** 根据实际存在的内标或当前溶剂残余峰定标，核验峰身份。不能一律使用 CDCl3，不能拿水峰、未知杂质或“最强峰”充当内标。需要数值时使用可信的溶剂参考资料并核对条件。记录采用的峰和定标值。
 5. **逐区人工解析。** 先查看全谱，再放大各信号区；按 [references/manual-analysis.md](references/manual-analysis.md) 显式选择峰、积分区间及 multiplet。区分样品、溶剂和杂质；以谱图证据控制拆分程度，不以理论结构强行造出未分辨的裂分。

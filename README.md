@@ -6,6 +6,8 @@
 
 将本仓库的 `mnova-nmr-processing` 文件夹复制到 `~/.codex/skills/`。
 
+Windows 和 macOS 共用 Python 3.9+ 标准库启动器。在安装后的 skill 目录运行 `python3 scripts/mnova_runner.py doctor`（Windows 可用 `python`）；在仓库根目录运行时使用 `python3 mnova-nmr-processing/scripts/mnova_runner.py doctor`。Mac 可在 `doctor` 前显式提供 `--mnova "/Applications/MestReNova.app"`，自动读取 bundle 内的可执行文件。能力检测、脚本运行和日志方式见 [跨平台执行说明](mnova-nmr-processing/references/cross-platform.md)。启动器不包含自动化学归属或通用成品生成器；具体样品的处理与核验 `.qs` 由代理按当前谱图生成。
+
 在 Codex 中提供完整原始数据目录（Bruker 数据需保留 `fid`、`acqus` 等关联文件）、样品结构及具体要求，例如：
 
 ```text
@@ -21,4 +23,15 @@
 - 在报告各信号中直接写化学归属，不使用 a/b/c/d 加单独释义。
 - 保存后重新打开 `.mnova` 核验；仅在要求时导出 PDF。
 
-Mnova 原生 QtScript 负责处理和保存，Python 辅助调用、谱点分析和绘图；人工解析通过逐区检查谱点及图像完成。程序职责、命令与验收方式见 [执行说明](mnova-nmr-processing/references/mnova-execution.md)。已验证 Windows / Mnova 14.0.0-23239，其他版本需核对接口。课程材料和原始 NMR 数据不随仓库分发。
+Mnova 原生 QtScript 负责处理和保存，Python 辅助调用、谱点分析和绘图；人工解析通过逐区检查谱点及图像完成。程序职责、命令与验收方式见 [执行说明](mnova-nmr-processing/references/mnova-execution.md)。课程材料、原始 NMR 数据、安装包及解包内容不随仓库分发。
+
+## 当前验证状态
+
+| 环境 | 已验证 | 待验证 |
+| --- | --- | --- |
+| Windows / Mnova 14.0.0-23239 | 现有原生处理与页面渲染流程；新启动器的安装发现、参数检查和真实小型脚本运行 | 其他版本及不同样品仍需逐次验收 |
+| macOS / Mnova 17.0.1-41952 | DMG 静态解包；Intel/Apple Silicon 主程序结构；实际 bundle 路径与 Info.plist 兼容解析；随附 QtScript 示例检查 | 真实 Mac 上的无界面脚本执行、许可证、保存/重新读取、字体及页面渲染 |
+
+**Mac 已完成适配与静态检查，尚未完成实机验收。** 不将 Windows 测试或安装包检查表述为 Mac 完整流程运行成功。
+
+启动器的 9 项标准库单元测试覆盖 bundle 解析、异常 plist、路径、超时和完成/输出检查。在仓库根目录运行 `python3 -m unittest discover -s tests -v`（Windows 可用 `python`）。启动器成功只代表调用及输出检查通过，化学解析和版式仍须按 skill 核验。
