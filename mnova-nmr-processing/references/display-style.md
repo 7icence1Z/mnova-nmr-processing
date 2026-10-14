@@ -6,9 +6,9 @@
 
 ## 脚本设置
 
-将 `scripts/display_style.qs` 内容纳入本次生成的 `.qs`。在人工积分、峰、多重峰、Expansion 和模板创建完成后，对主谱调用 `applyCourseDisplayStyle(spec, false)`，对每个 Expansion 调用 `applyCourseDisplayStyle(expansion, true)`；此函数不是全谱分析入口，不会自行修改用户全局偏好。
+优先将 `scripts/display_style.qs` 内容纳入本次生成的 `.qs`；正常 GUI 路径也可设置相同原生属性，验收标准一致。在人工积分、峰、多重峰、Expansion 和模板创建完成后，对主谱调用 `applyCourseDisplayStyle(spec, false)`，对每个 Expansion 调用 `applyCourseDisplayStyle(expansion, true)`；此函数不是全谱分析入口，不会自行修改用户全局偏好。
 
-关键属性来自 Mnova 14 随附 `nmr-properties.html` 和 `nmrPropertiesTest.qs`：
+关键属性可在当前 Mnova 的属性帮助和 `nmrPropertiesTest.qs` 等随附示例中核对：
 
 | 显示项目 | 设置 |
 | --- | --- |
@@ -21,10 +21,10 @@
 
 不是只写说明或依赖导入文件默认值：需在本次文档对象上显式设置。新版本属性需读回核对；不支持时查看该版本帮助/GUI 的对应显示项，不能静默忽略。
 
-本机 Mnova 14 已完成主谱和 Expansion 的设置、保存及独立重新读取测试，所列关闭项和普通积分/峰拾取显示开关保留，原生 Integral/Multiplet 对象未删除。`grid.showframe` 在该版本读回为字符串 `"true"`/`"false"`，辅助脚本对此做布尔兼容。此验证不替代实际成品的整页视觉检查，也不代表 Mac 当前版本已实测。
+部分版本可能将 `grid.showframe` 读回为字符串 `"true"`/`"false"`，辅助脚本对此做布尔兼容。属性读回不替代实际成品的整页视觉检查。
 
 ## 保存后的验收
 
-重新打开 `.mnova`，逐个枚举主谱与 Expansion，读回网格、纵轴、multiplet 显示及两类积分属性；原生积分、多重峰对象数和化学结果应保留。再渲染整页，确认四项关闭设置在所有谱图均生效、只有一套普通积分数值，且报告中的 δ/J/氢数仍存在。
+重新打开 `.mnova`，逐个枚举主谱与 Expansion，读回网格、纵轴、multiplet 显示及两类积分属性；原生积分、多重峰对象数和化学结果应保留。再渲染整页，确认四项关闭设置在所有谱图均生效、只有一套普通积分数值，且报告中的 δ、可靠 J、氢数或相对积分仍存在。
 
-隐藏纵轴不取消纵向缩放；继续调整峰高和基线以下留白。确认无紫色叠加后再按 [example-layout.md](example-layout.md) 检查绿色积分与峰标间距、ppm 刻度和标签位置。GUI 回退路径同样执行这些设置和验收。
+隐藏纵轴不取消纵向缩放；继续调整峰高和基线以下留白。确认无紫色叠加后再按 [layout-guide.md](layout-guide.md) 检查绿色积分与峰标间距、ppm 刻度和标签位置。GUI 回退路径同样执行这些设置和验收。

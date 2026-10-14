@@ -29,7 +29,7 @@ function applyCourseDisplayStyle(spec, isExpansion) {
         spec.setProperty(key, style[key]);
         // Fail explicitly if the current version cannot retain a visibility flag.
         var actual = spec.getProperty(key);
-        // Mnova 14 returns grid.showframe as the string "true"/"false".
+        // Some versions return grid.showframe as the string "true"/"false".
         if (actual === "true") actual = true;
         if (actual === "false") actual = false;
         if (typeof style[key] === "boolean" && actual !== style[key]) {

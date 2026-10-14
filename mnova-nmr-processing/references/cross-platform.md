@@ -35,45 +35,30 @@ python3 scripts/mnova_runner.py run --script "/path/to/verify.qs" --function ver
 
 若启动器进程以 0 退出、但本次日志明确出现 `previous instance`，说明任务可能仍在旧实例执行；启动器在本次 `--timeout` 剩余预算内等待同一个完成标记，不再启动 Mnova。超时无标记记录 `forwarded_incomplete`，先检查旧实例，不能据此自动重跑处理。没有转交证据的脚本错误仍立即报告。
 
-## Mac 崩溃反馈与 GUI 回退
+## Mac 启动故障与 GUI 回退
 
-2026-10-14 用户反馈的崩溃截图显示：`MestReNova 16.0.0 (16.0.0.379276)`、bundle ID `com.mestrelab.MestReNova-LITE`、`X86-64 (Translated)`、Apple Silicon Mac、macOS 27.0，以及主线程 `EXC_CRASH (SIGABRT)` / `abort() called`。这些信息只证明程序原生异常退出；截图没有提供完整调用栈和启动命令，不能据此确定是 macOS 系统服务、Rosetta、许可、Qt 或具体谱图导致。与下面的 17.0.1 安装包检查分开判断，不假定用户安装的是 17。
-
-第二张截图是先前代理的完成报告，称无界面失败后改用 GUI 生成文件。它是 GUI 路径可能可行的用户反馈，不是成品或化学结果已独立验证的证据；不复制其中样品的峰位、积分边界或 J，也不将其中“系统服务异常”升级为已确认根因。只有现有样品确实无法分辨时才合并芳香区为 m，不能因为该截图把其他芳香信号一律合并。
+遇到 SIGABRT 等原生崩溃时，记录当前安装版本、程序架构、退出码和日志。仅凭 abort 信息不能判断是系统服务、转译、许可、Qt 或数据导致；需要完整触发线程堆栈定位。
 
 处理原则：
 
 1. 有同一环境崩溃证据时停止重复 doctor/无界面运行；首次执行失败也只记录一次，不自动循环重试。启动器对负退出码保存 `native_crash` 和原值，避免把崩溃当作普通脚本错误或成功。已有输出也不能覆盖崩溃状态。
-2. Mac 子进程默认移除继承的 `QT_PLUGIN_PATH`、`QT_QPA_PLATFORM_PLUGIN_PATH`、`QT_QPA_PLATFORM`，让 Mnova 使用自身部署；仅记录移除的变量名，不修改父进程或系统环境，不强设 offscreen/minimal。这是避免外部 Qt 覆盖的措施，尚不能证明可修复本次 SIGABRT。Qt 官方说明 [插件路径可干扰其他 Qt 安装](https://doc.qt.io/qt-6/deployment-plugins.html)，[QPA 环境变量可覆盖默认平台](https://doc.qt.io/qt-6/qpa.html)。
+2. Mac 子进程默认移除继承的 `QT_PLUGIN_PATH`、`QT_QPA_PLATFORM_PLUGIN_PATH`、`QT_QPA_PLATFORM`，让 Mnova 使用自身部署；仅记录移除的变量名，不修改父进程或系统环境，不强设 offscreen/minimal。这是避免外部 Qt 覆盖的措施，不保证修复所有原生崩溃。Qt 官方说明 [插件路径可干扰其他 Qt 安装](https://doc.qt.io/qt-6/deployment-plugins.html)，[QPA 环境变量可覆盖默认平台](https://doc.qt.io/qt-6/qpa.html)。
 3. 若正常 GUI 可以启动，准备同一原生 `.qs`，不再通过失败的命令行预检。以下命令只生成 UTF-8 BOM 脚本和清单，不启动程序、不处理数据、不宣称执行成功：
 
 ```sh
 python3 scripts/mnova_runner.py prepare-gui --script "/path/to/process.qs" --function processSpectrum --run-dir "/path/to/run-logs" --expect "/path/to/result.mnova"
 ```
 
-4. 在已安装且正常的 Mnova GUI 的脚本编辑器中加载输出目录的 `wrapped.qs`，选择函数 `_mnovaRunnerEntry` 执行。由当前可用、受支持的 GUI 工具操作；没有该能力时给用户明确待执行步骤。不要通过临时发明的 GUI 自动化接口代替。代理有可用能力且任务已授权时继续做，不为每个点击增加审批。
+4. 在已安装且正常的 Mnova GUI 的脚本编辑器中加载输出目录的 `wrapped.qs`，选择函数 `_mnovaRunnerEntry` 执行。由当前可用、受支持的 GUI 工具操作；没有该能力时给用户明确待执行步骤。任务已授权且有工具能力时继续执行；无能力时不宣称完成。
 5. `prepared_not_executed` 不能改称已处理。每次准备生成新目录，wrapper 在函数执行开始时删除旧完成标记，防止 GUI 重跑失败后遗留上次成功状态；脚本有语法/加载错误而入口未执行时仍需检查文件更新时间，不能只看旧标记，修改后应重新 prepare。执行后需确认本次 `completed.txt`、目标文件更新和原生对象，独立重新打开并核验。GUI 手工完成等效处理时没有标记也可以人工核验，但须明确实际执行方式，不能伪造标记。无界面已崩溃时在正常 GUI 内重新打开和渲染，避免验收阶段再次触发崩溃。
-6. 四项显示设置仍须对主谱及全部 Expansion 生效，见 [display-style.md](display-style.md)。若 GUI 也失败，保留诊断、脚本及输出状态，明确未完成；不删许可、不改签名、不强制转译或要求升级来掩盖故障。需要进一步根因定位时读取完整崩溃报告中的触发线程堆栈和已保存日志。
+6. GUI 也失败时保留诊断、脚本和输出状态，明确未完成；不删许可、改签名或强制转译。进一步定位读取完整触发线程堆栈及日志。
 
-## macOS 需要实际验证的部分
+## 新安装的能力核验
 
-- 使用用户已安装、已激活的版本；不要求更换产品或安装 Mnova Console。若本版不提供所需无界面接口，报告具体缺项。
-- 由系统执行已有 bundle 中的程序，不自动改签名、隔离属性或强制指定 Intel/ARM 架构。架构或系统执行失败时保留错误信息。
-- 用同一原生 API 的小型脚本核验 File/TextStream、脚本编码、谱图保存、重新读取和 `toPixmap`，再运行样品。Windows 实测成功不能替代真实 Mac 测试。
-- Times New Roman 必须按实际字体确认。中文字体从当前 Mac 安装字体选择适合的衬线字体，不能硬编码 Windows 的 SimSun；Times New Roman 缺失时报告，不静默替换。
-- 页面字号、字距和对象边界以重新打开后的 Mnova 渲染为准，不能只用 Python 图像推断跨平台版式一致。
+在当前版本先验证 File/TextStream、脚本编码、保存、重新读取和页面渲染。程序架构、静态资源检查及其他环境的成功不能代替这些步骤；字体和版式按 [显示规范](display-style.md) 与 [版式指南](layout-guide.md) 检查。
 
 官方资料：[Mnova 脚本入门](https://mestrelab.com/starting-guides/how-to-get-started-with-mnova-scripts.html)；[命令行脚本说明](https://www.mestrelabcn.com/Manual_HTML_Mnova_15/new_item.htm)。文档和参数按用户实际版本核对。
 
-## 已检查的 Mnova 17 Mac 安装包
+## 元数据兼容
 
-对用户提供的 `MestReNova-17.0.1-41952.dmg` 做过静态解包检查，没有在 Windows 运行 Mac 程序，也没有将厂商二进制或原始脚本纳入仓库。
-
-- DMG 是 APFS 卷，内含 `MestReNova.app`；版本字段为 `17.0.1.41952`，bundle ID 为 `com.mestrelab.MestReNova`。
-- `CFBundleExecutable` 是 `MestReNova`，程序路径为 `Contents/MacOS/MestReNova`。Mach-O fat header 包含 `x86_64` 和 `arm64` 两个切片。
-- 此 DMG 的 Info.plist XML 属性引号包含字面 `\"`，标准 plistlib 会报 XML 解析错误。启动器仅对此已识别的 XML 头形式在内存中去除引号转义后解析，不改写安装包；其他损坏 plist 不猜测程序名。
-- 官方 `.qs` 在 `Contents/Resources/scripts/`，示例在其 `examples/` 子目录。保留 File/TextStream、`Integral`、`Multiplet`、预处理和 `serialization.save` 示例；不是 Windows 的 `examples/scripts/` 路径。
-- 卷目录包含 `Contents/PlugIns/libScriptingPlugin.dylib`、`libPyScriptingPlugin.dylib`、QtScript 框架和 `Contents/python/` 的 Python 3.11。存在 Python 插件不代表 QtScript 应迁移到未经验证的 Python NMR API，现有 `.qs` 流程继续使用。
-- 在主程序二进制中找到 `nogui`、`logfile`、`scriptFunction` 等参数相关字符串，这是静态线索，不等于实际 `--help` 和脚本执行通过。安装包未找到独立的 `documents/scripts/*.html`；本版按随附 `.qs` 示例与当前在线/应用帮助核对 API，不要求该路径一定存在。
-
-启动器已用实际解出的 bundle 核验程序解析；跨平台路径及异常处理有单元测试。Mac 的实际命令行启动、许可证、字体和完整 NMR 页面渲染仍需真实 macOS 验证。
+某些 bundle 的 plist XML 属性引号含字面 `\"`；启动器仅对此已识别的 XML 头形式在内存中处理转义，不修改厂商文件。其他损坏元数据明确报错。原生脚本资源路径和 API 使用见 [mnova-execution.md](mnova-execution.md)，不要求每个版本都带相同文档目录。

@@ -21,7 +21,7 @@ def bundle_info(bundle):
     try:
         info = plistlib.loads(raw)
     except (plistlib.InvalidFileException, ExpatError):
-        # Observed in the 17.0.1-41952 DMG: XML markup quotes are backslash escaped.
+        # Some bundles contain backslash-escaped XML markup quotes.
         # Normalize only this identified form in memory; never rewrite the bundle.
         if raw.startswith(b'<?xml version=\\"'):
             try:
