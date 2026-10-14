@@ -2,7 +2,7 @@
 
 ## 程序与职责
 
-整个 `.mnova` 生成流程使用脚本，不依赖窗口启动、菜单点击或桌面控制。人工解析指代理逐区查看数字谱点及脚本渲染的图像后做选择，随后用脚本写入选择，不是要求用户在 GUI 中操作。
+优先使用原生脚本生成 `.mnova`。人工解析指逐区检查谱点和图像后做选择，再写入原生对象。Mac 无界面启动崩溃时允许在正常 GUI 会话执行同一脚本或进行等效原生操作；不得为了“纯脚本”反复触发崩溃，也不得在没有实际执行的情况下报告完成。
 
 | 程序 / 库 | 用途 |
 | --- | --- |
@@ -29,7 +29,7 @@ MestReNova.exe --nogui --wait --logfile run.log --sf processSpectrum process.qs
 - `.qs` 文件作为位置参数加载；不要猜测 `--script`。
 - 将进程工作目录设为 Mnova 安装目录。Python 使用参数数组执行，不拼接 shell 命令；中文与空格路径作为完整参数传入。设置合理超时，超时后检查本次进程和日志，再决定是否重试，避免并发调用。
 - 退出码 0 不能证明成功：实测脚本异常仍可能以 0 退出；前次实例未退出也可能出现“started at previous instance”。检查本次日志、输出更新时间、重新读取结果，遇到转交旧实例时确认实际脚本是否完成。
-- 无界面入口失败时报告具体日志或缺少的能力，不要求用户先打开 GUI，不改用桌面控制，也不伪造 `.mnova`。
+- 无界面入口原生崩溃时保留诊断并停止自动重试。GUI 正常时可用 `prepare-gui` 准备原生脚本，随后通过当前可用的受支持 GUI 工具或用户正常会话执行；准备不等于执行。无 GUI 能力时说明待执行步骤，不能伪造 `.mnova` 或成功结果。具体见 [cross-platform.md](cross-platform.md)。
 
 ## 两阶段处理与独立验收
 
@@ -37,9 +37,11 @@ MestReNova.exe --nogui --wait --logfile run.log --sf processSpectrum process.qs
 2. **逐区判断并写回。** 根据当前谱图确认定标峰、可靠谱线、积分边界及多重峰模式，再通过 QtScript 显式设置。定标后所有坐标使用同一坐标系。用 `Peak` / `Peaks` 写人工峰标，`Integral(spec, SpectrumRegion(...), false)` / `Integrals` 写积分，`Multiplet` / `Multiplets` 写峰组。清晰 d 等用参与谱线计算 J；重叠区可为 m，不补造裂分。报告括号与 multiplet 名称均直接写化学归属，不使用字母代码和独立释义表。
 3. **结构与排版。** 可从用户提供且确认结构的文件读取原生 `Molecule`，或用当前 API 导入经确认的结构。已有示例可提供结构对象，不能提供未经复核的峰位或积分。用 `page.cloneItems(...)` 复制原生对象，用 `draw.text(..., true)` 创建可编辑文字；显示主谱、局部放大、结构、直接归属和轴下积分。
 4. **保存。** `serialization.save(outputPath, "mnova")` 保存原生文档；该 API 未声明返回布尔值，实测会返回空值，不写 `if (!serialization.save(...))` 来判断失败。由调用端查日志、文件状态及重新读取结果。只有用户要求时才执行 `serialization.save(pdfPath, "pdf")`。
-5. **独立无界面核验。** 在下一次 Mnova 调用中 `serialization.open(outputPath)`，枚举原生谱图、积分、多重峰、结构和文字对象；核对范围、频率、积分归一化、峰位置、multiplet 名称及报告内容。用 `page.toPixmap(dpi).save(pngPath, "PNG", -1)` 渲染完整页面，查看 PNG 检查裁切、遮挡与可读性；必要时修改脚本后重跑。PNG 是核验材料，不能代替 `.mnova`。
+5. **独立重新打开核验。** 在正常执行路径中 `serialization.open(outputPath)`，枚举原生谱图、积分、多重峰、结构和文字对象；核对范围、频率、积分归一化、峰位置、multiplet 名称及报告内容。对主谱及所有 Expansion 读回 [显示设置](display-style.md) 属性。用 `page.toPixmap(dpi).save(pngPath, "PNG", -1)` 或实际 GUI/PDF 渲染完整页面，检查裁切、遮挡与可读性；必要时修改后重新核验。无界面正常时独立调用；已知崩溃时使用正常 GUI 会话，不再触发失败模式。PNG 是核验材料，不能代替 `.mnova`。
 
 ## 已验证的实现细节
+
+- 显示预设由 `scripts/display_style.qs` 显式应用到主谱和每个 Expansion：关闭背景网格、纵轴及 `multiplets.*` 的标记/积分显示，保留普通 `integrals.*` 与 Peak Picking。隐藏原生多重峰显示层不删除对象；细边框与背景网格分开控制。完整规则和验收见 [display-style.md](display-style.md)。属性来源已查 Mnova 14 随附帮助；在 Mac 当前版本仍需读回和渲染核验。
 
 - 自动处理使用过 `PC[1].Method = "Global"`、`PC[1].InitMode = "InitZero"`、`BC[1].Apply = true`、`BC[1].algorithm = "Bernstein"`、`PP.Apply = false`。这是可查阅的实测配置；其他谱图仍须检查效果，不固定频率、溶剂、定标值或积分区间。
 - 单一归一化锚点：`integrals.normValue = anchor.integralValue() / anchorHydrogenCount`，其余积分读取 `integralValue(integrals.normValue)`。若用可编辑文字呈现轴下积分，文字从当前实测积分生成，不硬编码或独立强制为理论整数；每次重处理后同步更新。
